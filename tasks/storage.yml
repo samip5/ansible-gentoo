@@ -3,20 +3,10 @@
   tags:
     - storage
 
-#TODO: port to module parted when issues will be fixed
-# https://github.com/ansible/ansible/issues/26905
-# https://github.com/ansible/ansible/issues/23914
-# https://github.com/ansible/ansible/issues/27841
-# https://github.com/ansible/ansible/issues/26890
-- name: Make Partition Labels
-  command: "parted -s {{ main_disk }} mklabel gpt"
-  when: parted_is_done.stat.exists == False
-  tags:
-    - storage
-
 - name: Create Grub BIOS Partition
   when: parted_is_done.stat.exists == False
   parted:
+    label: gpt
     device: "{{ main_disk }}"
     number: 1
     part_end: 1MiB
@@ -24,31 +14,38 @@
     state: present
   tags:
     - storage
-  
-- name: Create Boot Partition
+
+- name: Create Swap Partition
   when: parted_is_done.stat.exists == False
   parted:
+    label: gpt
     device: "{{ main_disk }}"
     number: 2
     part_start: 1MiB
-    part_end: 150MiB
+    part_end: "{{ swap_size }}"
     state: present
   tags:
     - storage
 
-- name: Format Boot Partition
-  filesystem: "fstype={{ fstype }} dev={{ main_disk }}2 force={{ force_format }}"
+- name: Format Swap Partition
+  command: "mkswap {{ main_disk }}2"
   tags:
     - storage
 
-- name: Create Main Physical Disk
+- name: Create Root Partition
   when: parted_is_done.stat.exists == False
   parted:
+    label: gpt
     device: "{{ main_disk }}"
+    part_start: "{{ swap_size }}"
+    part_end: 100%
     number: 3
-    part_start: 150MiB
-    flags: [ LVM ]
     state: present
+  tags:
+    - storage
+
+- name: Format Root Partition
+  filesystem: "fstype={{ fstype }} dev={{ main_disk }}3 force={{ force_format }}"
   tags:
     - storage
 
@@ -58,52 +55,10 @@
   tags:
     - storage
 
-- name: Create Main Volume Group
-  lvg: "pvs={{ main_disk }}3 vg={{ vg_name }}"
-  tags:
-    - storage
-
-- name: Create Swap Volume
-  lvol: "lv=swap vg={{ vg_name }} size={{ swap_size }}"
-  tags:
-    - storage
-
-- name: Format Swap Volume
-  command: "mkswap /dev/mapper/{{ vg_name }}-swap"
-  tags:
-    - storage
-
-- name: Create root Volume
-  lvol: "lv=root vg={{ vg_name }} size={{ root_size }}"
-  tags:
-    - storage
-
-- name: Format root Volume
-  filesystem: "fstype={{ fstype }} dev=/dev/mapper/{{ vg_name }}-root force={{ force_format }}"
-  tags:
-    - storage
-
-- name: Create mountpoints
-  file:
-    path: /mnt/gentoo/boot
-    state: directory
-  tags:
-    - storage
-
 - name: Mount root
   mount:
     path: /mnt/gentoo
-    src: /dev/mapper/{{ vg_name }}-root
-    fstab: /tmp/tmp_fstab
-    fstype: "{{ fstype }}"
-    state: mounted
-  tags:
-    - storage
-
-- name: Mount boot
-  mount:
-    path: /mnt/gentoo/boot
-    src: "{{ main_disk }}2"
+    src: "{{ main_disk }}3"
     fstab: /tmp/tmp_fstab
     fstype: "{{ fstype }}"
     state: mounted
