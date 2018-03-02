@@ -6,8 +6,8 @@
       creates: /mnt/gentoo/usr/sbin/syslog-ng
     - name: cronie
       creates: /mnt/gentoo/etc/init.d/cronie
-    - name: grub
-      creates: /mnt/gentoo/usr/sbin/grub2-install
+    - name: grub:2
+      creates: /mnt/gentoo/usr/sbin/grub-install
 
 - name: Add syslog-ng to Default Run Configuration
   command: chroot /mnt/gentoo bash -c 'rc-update add syslog-ng default'
