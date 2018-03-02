@@ -1,20 +1,19 @@
 ---
-# defaults file for ansible-gentoo
-pubkey: ~/.ssh/id_rsa.pub
-main_disk: /dev/vda
-swap_size: 2048MiB
-fstype: xfs
-force_format: no
-mirror: http://gentoo.aditsu.net:8000
-stage3_prefix: stage3-amd64-
-stage3_file_suffix: .tar.xz
-timezone: Australia/Sydney
 domain: localdomain
-kernel: config-4.9.76-gentoo-r1
-make_opts: -j2
-management_interface: "{{ ansible_default_ipv4.interface }}"
-root_passwd: elevator.aztec.kidney.index
+force_format: no
+fstype: xfs
 gateway: "{{ ansible_default_ipv4.gateway }}"
-netmask: "{{ ansible_default_ipv4.netmask }}"
 gpg_key_relengauto: 13EBBDBEDE7A12775DFDB1BABB572E0E2D182910
 gpg_key_relengauto_desc: "Gentoo Linux Release Engineering (Automated Weekly Release Key) <releng@gentoo.org>"
+kernel: config-4.9.76-gentoo-r1
+main_disk: /dev/sda
+make_opts: -j2
+management_interface: "{{ ansible_default_ipv4.interface }}"
+mirror: http://gentoo.aditsu.net:8000
+netmask: "{{ ansible_default_ipv4.netmask }}"
+pubkey: ~/.ssh/id_rsa.pub
+root_passwd: eugeiXiet5ki3thaa0AidaiFo
+stage3_file_suffix: .tar.xz
+stage3_prefix: stage3-amd64-
+swap_size: 2048MiB
+timezone: Australia/Sydney
