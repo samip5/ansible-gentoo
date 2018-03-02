@@ -1,7 +1,8 @@
 ---
 - name: Management interface configuration
   command: chroot /mnt/gentoo bash -c "cd /etc/init.d; ln -s net.lo net.{{ management_interface }}"
-  creates: /mnt/gentoo/etc/init.d/net.{{ management_interface }}
+  args:
+    creates: /mnt/gentoo/etc/init.d/net.{{ management_interface }}
 
 - name: Configure default interface
   template:
