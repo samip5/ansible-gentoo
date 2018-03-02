@@ -168,7 +168,7 @@
     - chroot
 
 - name: Create make.conf
-  copy:
+  template:
     src: make.conf
     dest: /mnt/gentoo/etc/portage/make.conf
   tags:

@@ -5,15 +5,15 @@ main_disk: /dev/vda
 swap_size: 2048MiB
 fstype: xfs
 force_format: no
-timezone: America/Los_Angeles
-domain: met.tfoundry.com
-kernel: config-3.13.0-24-generic
-make_opts: -j4
 mirror: http://gentoo.aditsu.net:8000
 stage3_prefix: stage3-amd64-
 stage3_file_suffix: .tar.xz
+timezone: Australia/Sydney
+domain: localdomain
+kernel: config-4.9.76-gentoo-r1
+make_opts: -j2
 management_interface: "{{ ansible_default_ipv4.interface }}"
-root_passwd: gentoo-root
+root_passwd: elevator.aztec.kidney.index
 gateway: "{{ ansible_default_ipv4.gateway }}"
 netmask: "{{ ansible_default_ipv4.netmask }}"
 gpg_key_relengauto: 13EBBDBEDE7A12775DFDB1BABB572E0E2D182910
