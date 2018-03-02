@@ -1,0 +1,179 @@
+---
+- name: Copy signing keys
+  copy:
+    src: "{{ item }}"
+    dest: /tmp
+    force: true
+  with_fileglob:
+    - keys/*.asc
+  tags:
+    - filesystem
+
+- name: Import signing keys
+  shell: "gpg --import /tmp/{{ item }}.asc && echo '{{ item }}:6' | gpg --import-ownertrust"
+  register: import_key_trusted
+  with_items:
+    - "{{ gpg_key_relengauto }}"
+  failed_when: >
+    not import_key_trusted.stderr |
+    search("key " + item|reverse|truncate(16)|reverse + ".*(imported|not changed)")
+  tags:
+    - filesystem
+
+- name: Copy stage retrieval script
+  template:
+    src: get_stage.sh
+    dest: /mnt/gentoo/
+    mode: 755
+    force: yes
+  tags:
+    - filesystem
+
+- name: Find latest available release
+  command: /mnt/gentoo/get_stage.sh
+  args:
+    chdir: /mnt/gentoo
+  environment:
+    SHOW_RELEASE_NAME: yes
+  register: stage3_release_name
+  tags:
+    - filesystem
+
+- name: Download stage3 archive & signature
+  command: /mnt/gentoo/get_stage.sh
+  tags:
+    - filesystem
+  args:
+    chdir: /mnt/gentoo
+    creates: /mnt/gentoo/{{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}
+
+- name: Verify stage3 archive signature
+  command: gpg --verify {{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}.DIGESTS.asc
+  args:
+      chdir: /mnt/gentoo
+  tags:
+    - filesystem
+  register: verify_archive_sig
+  failed_when: >
+    "Good signature from \"" + gpg_key_relengauto_desc
+    not in verify_archive_sig.stderr
+
+- name: Verify stage3 archive hash
+  command: sha512sum -c stage3.sha512
+  args:
+    chdir: /mnt/gentoo
+  register: verify_archive_hash
+  failed_when: >
+    ": OK" not in verify_archive_hash.stdout
+  tags:
+    - filesystem
+
+- name: Unarchive stage3
+  unarchive:
+    src: /mnt/gentoo/{{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}
+    dest: /mnt/gentoo
+    remote_src: yes
+    extra_opts:
+      - --xattrs-include='*.*'
+      - --numeric-owner
+    creates: /mnt/gentoo/etc/gentoo-release
+  tags:
+    - filesystem
+
+- name: Cleanup stage3
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /mnt/gentoo/get_stage.sh
+    - /mnt/gentoo/latest-stage3-amd64.txt
+    - /mnt/gentoo/{{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}
+    - /mnt/gentoo/{{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}.DIGESTS.asc
+    - /mnt/gentoo/stage3.sha512
+  tags:
+    - filesystem
+
+- name: Mount proc, dev, sys
+- mount:
+    path: /mnt/gentoo/proc
+    fstype: proc
+    src: proc
+    state: mounted
+  tags:
+    - chroot
+
+- mount:
+    path: /mnt/gentoo/dev
+    src: /dev
+    opts: rbind
+    state: mounted
+    fstype: none
+  tags:
+    - chroot
+
+- mount:
+    path: /mnt/gentoo/sys
+    src: /sys
+    opts: rbind
+    state: mounted
+    fstype: none
+  tags:
+    - chroot
+
+- name: Create resolv.conf
+  command: cp -L /etc/resolv.conf /mnt/gentoo/etc/
+  args:
+    creates: /mnt/gentoo/etc/resolv.conf
+  tags:
+    - chroot
+
+- name: Install Portage snapshot
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; /usr/bin/emerge-webrsync'
+  args:
+    creates: /mnt/gentoo/usr/portage/Manifest
+  tags:
+    - chroot
+
+- name: Set Gentoo profile
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; eselect profile set 1'
+  tags:
+    - chroot
+
+- name: Set timezone
+  command: >
+    chroot /mnt/gentoo bash -c
+    'cp /usr/share/zoneinfo/{{ timezone }} /etc/localtime; echo "{{ timezone }}" > /etc/timezone'
+  tags:
+    - chroot
+
+- name: Create hosts file
+  template:
+    src: hosts
+    dest: /mnt/gentoo/etc/hosts
+  tags:
+    - chroot
+
+- name: Set hostname
+  template:
+    src: hostname
+    dest: /mnt/gentoo/etc/conf.d/hostname
+  tags:
+    - chroot
+
+- name: Create fstab
+  copy:
+    src: fstab
+    dest: /mnt/gentoo/etc/fstab
+  tags:
+    - chroot
+
+- name: Create make.conf
+  copy:
+    src: make.conf
+    dest: /mnt/gentoo/etc/portage/make.conf
+  tags:
+    - chroot
+
+- file:
+    path: /tmp/base_completed
+    state: touch

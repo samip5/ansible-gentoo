@@ -4,12 +4,13 @@
   authorized_key: user=root key="{{ lookup('file', pubkey) }}"
 
 - include: storage.yml
+- stat:
+    path: /tmp/base_completed
+  register: base_completed
 
-- stat: path=/tmp/filesystem_completed
-  register: filesystem_completed
+- include_tasks: base.yml
+  when: base_completed.stat.exists == False
 
-- include: filesystem.yml
-  when: filesystem_completed.stat.exists == False
 
 - include: kernel.yml
 - include: networking.yml
