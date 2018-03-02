@@ -1,8 +1,7 @@
+---
 - name: Install System Packages
-  command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge {{ item.name }}' creates={{ item.creates }}
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge {{ item.name }}' creates="{{ item.creates }}"
   with_items:
-    - name: eix
-      creates: /mnt/gentoo/usr/bin/eix
     - name: syslog-ng
       creates: /mnt/gentoo/usr/sbin/syslog-ng
     - name: cronie
@@ -16,19 +15,14 @@
 - name: Add cronie to Default Run Configuration
   command: chroot /mnt/gentoo bash -c 'rc-update add cronie default'
 
-- name: Remount /dev to get /dev/mapper visible
-  command: mount --rbind /dev /mnt/gentoo/dev
-
 - name: Configure grub Defaults
   copy: src=grub_default dest=/mnt/gentoo/etc/default/grub mode=0644 owner=root group=root
 
 - name: Install Grub to Boot Drive
-  command: chroot /mnt/gentoo bash -c 'source /etc/profile; grub2-install /dev/sda'
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; grub-install /dev/{{ main_disk }}'
 
 - name: Configure Grub Make Config
-  command: chroot /mnt/gentoo bash -c 'source /etc/profile; grub2-mkconfig -o /boot/grub/grub.cfg'
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; grub-mkconfig -o /boot/grub/grub.cfg'
 
 - name: Set Root Password
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; echo "root:{{ root_passwd }}" | /usr/sbin/chpasswd'
-
-

@@ -1,9 +1,6 @@
 ---
-# tasks file for ansible-gentoo
-- name: Deploy User's Authorized Key to Root
-  authorized_key: user=root key="{{ lookup('file', pubkey) }}"
+- include_tasks: storage.yml
 
-- include: storage.yml
 - stat:
     path: /tmp/base_completed
   register: base_completed
@@ -11,9 +8,12 @@
 - include_tasks: base.yml
   when: base_completed.stat.exists == False
 
+- include_tasks: kernel.yml
 
-- include: kernel.yml
-- include: networking.yml
-- include: system.yml
-- include: packages.yml
-- include: reboot.yml
+- include_tasks: networking.yml
+
+- include_tasks: system.yml
+
+- include_tasks: packages.yml
+
+- include_tasks: reboot.yml

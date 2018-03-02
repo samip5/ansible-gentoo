@@ -1,4 +1,3 @@
 ---
-# tasks file for rebooting
 - name: Reboot System
   command: reboot

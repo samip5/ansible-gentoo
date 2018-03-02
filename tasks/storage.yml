@@ -1,4 +1,6 @@
-- stat: path=/tmp/parted_is_done
+---
+- stat:
+    path: /tmp/parted_is_done
   register: parted_is_done
   tags:
     - storage
@@ -45,7 +47,10 @@
     - storage
 
 - name: Format Root Partition
-  filesystem: "fstype={{ fstype }} dev={{ main_disk }}3 force={{ force_format }}"
+  filesystem:
+    fstype: "{{ fstype }}"
+    dev: "{{ main_disk }}3"
+    force: "{{ force_format }}"
   tags:
     - storage
 

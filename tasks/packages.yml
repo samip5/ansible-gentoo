@@ -1,7 +1,12 @@
+---
 - name: Install Miscellaneous Packages
-  command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge {{ item.name }}' creates={{ item.creates }}
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge -u {{ item.name }}'
   with_items:
-    - name: iproute2
-      creates: /mnt/gentoo/bin/ip
-    - name: vim
-      creates: /mnt/gentoo/usr/bin/vim
+    - name: app-editors/vim
+    - name: app-misc/tmux
+    - name: app-shells/zsh
+    - name: dev-lang/python
+    - name: dev-vcs/git
+    - name: net-misc/dhcpcd
+    - name: net-misc/netifrc
+    - name: sys-fs/xfsprogs

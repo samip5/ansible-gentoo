@@ -1,3 +1,4 @@
+---
 - name: Remove Gentoo Kernel Sources
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge --depclean gentoo-sources'
 
