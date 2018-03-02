@@ -7,6 +7,4 @@
     - name: app-shells/zsh
     - name: dev-lang/python
     - name: dev-vcs/git
-    - name: net-misc/dhcpcd
-    - name: net-misc/netifrc
     - name: sys-fs/xfsprogs

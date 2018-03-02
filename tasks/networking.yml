@@ -1,23 +1,29 @@
 ---
-- name: Management Interface Configuration
+- name: Management interface configuration
   command: chroot /mnt/gentoo bash -c "cd /etc/init.d; ln -s net.lo net.{{ management_interface }}"
   creates: /mnt/gentoo/etc/init.d/net.{{ management_interface }}
 
-- name: Configure Default Interface
+- name: Configure default interface
   template:
     src: net
     dest: /mnt/gentoo/etc/conf.d/net
 
-- name: Add Interface Default Run Configuration.
+- name: Start network interface at boot
   command: chroot /mnt/gentoo bash -c 'rc-update add net.{{ management_interface }} default'
 
-- name: Add SSHD to Default Run Configuration.
+- name: Install networking components
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge -u {{ item.name }}'
+  with_items:
+    - name: net-misc/dhcpcd
+    - name: net-misc/netifrc
+
+- name: Start sshd at boot
   command: chroot /mnt/gentoo bash -c 'rc-update add sshd default'
 
-- name: Create root .ssh Directory
+- name: Create root .ssh directory
   command: mkdir -p /mnt/gentoo/root/.ssh && chmod 700 /mnt/gentoo/root/.ssh && chmod 700 /mnt/gentoo/root/.ssh
 
-- name: Configure Root Authorized Key
+- name: Configure root authorized key
   authorized_key:
     user: root
     key: "{{ lookup('file', pubkey) }}"
