@@ -19,7 +19,7 @@
   copy: src=grub_default dest=/mnt/gentoo/etc/default/grub mode=0644 owner=root group=root
 
 - name: Install Grub to Boot Drive
-  command: chroot /mnt/gentoo bash -c 'source /etc/profile; grub-install /dev/{{ main_disk }}'
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; grub-install {{ main_disk }}'
 
 - name: Configure Grub Make Config
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; grub-mkconfig -o /boot/grub/grub.cfg'

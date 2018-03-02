@@ -93,7 +93,6 @@
   tags:
     - filesystem
 
-- name: Mount proc, dev, sys
 - mount:
     path: /mnt/gentoo/proc
     fstype: proc
