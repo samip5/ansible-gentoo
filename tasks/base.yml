@@ -133,8 +133,8 @@
   tags:
     - chroot
 
-- name: Set Gentoo profile
-  command: chroot /mnt/gentoo bash -c 'source /etc/profile; eselect profile set 1'
+- name: Set Gentoo profile (amd64 17.0)
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; eselect profile set 12'
   tags:
     - chroot
 
