@@ -1,5 +1,5 @@
 ---
-- name: Install System Packages
+- name: Install system packages
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge {{ item.name }}' creates="{{ item.creates }}"
   with_items:
     - name: syslog-ng
@@ -9,11 +9,11 @@
     - name: grub:2
       creates: /mnt/gentoo/usr/sbin/grub-install
 
-- name: Add syslog-ng to Default Run Configuration
-  command: chroot /mnt/gentoo bash -c 'rc-update add syslog-ng default'
-
-- name: Add cronie to Default Run Configuration
-  command: chroot /mnt/gentoo bash -c 'rc-update add cronie default'
+- name: Start system packages at boot
+  command: chroot /mnt/gentoo bash -c 'rc-update add {{ item }} default'
+  with_items:
+    - syslog-ng
+    - cronie
 
 - name: Configure grub Defaults
   copy: src=grub_default dest=/mnt/gentoo/etc/default/grub mode=0644 owner=root group=root
@@ -26,3 +26,39 @@
 
 - name: Set Root Password
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; echo "root:{{ root_passwd }}" | /usr/sbin/chpasswd'
+
+- name: Copy portage config
+  copy:
+    src: portage/package.use
+    dest: /etc/portage/package.use/system
+
+- name: Rebuild @world
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge --update --deep --newuse @world'
+
+- name: Copy locale config
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    force: yes
+  with_items:
+    - src: locale.gen
+      dest: /etc/locale.gen
+    - src: 02locale
+      dest: /etc/env.d/02locale
+
+- name: Build locales
+  shell: chroot /mnt/gentoo bash -c 'source /etc/profile; /usr/sbin/locale-gen; /usr/sbin/env-update'
+
+- name: Add user
+  user:
+    name: "{{ user_name }}"
+    group: users
+    password: "{{ user_passwd_crypt }}"
+    update_password: on_create
+
+- name: Copy ssh key to user
+  authorized_key:
+    user: "{{ user_name }}"
+    state: present
+    key: "{{ lookup('file', pubkey) }}"
+    manage_dir: True
