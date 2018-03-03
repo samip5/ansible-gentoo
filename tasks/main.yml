@@ -1,19 +1,19 @@
 ---
-- include_tasks: storage.yml
+- import_tasks: storage.yml
 
 - stat:
     path: /tmp/base_completed
   register: base_completed
 
-- include_tasks: base.yml
+- import_tasks: base.yml
   when: base_completed.stat.exists == False
 
-- include_tasks: kernel.yml
+- import_tasks: kernel.yml
 
-- include_tasks: networking.yml
+- import_tasks: networking.yml
 
-- include_tasks: system.yml
+- import_tasks: system.yml
 
-- include_tasks: packages.yml
+- import_tasks: packages.yml
 
-- include_tasks: reboot.yml
+- import_tasks: reboot.yml
