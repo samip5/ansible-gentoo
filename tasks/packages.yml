@@ -4,6 +4,7 @@
   with_items:
     - name: app-editors/vim
     - name: app-misc/tmux
+    - name: app-portage/gentoolkit
     - name: app-shells/zsh
     - name: dev-lang/python
     - name: dev-vcs/git
