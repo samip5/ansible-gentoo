@@ -1,8 +1,15 @@
 ---
-- name: Emerge Gentoo Sources
-  command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge gentoo-sources;'
+- name: Create git bare repo for kernel & git clone
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; mkdir /usr/src/linux-stable-git-bare; git clone --mirror --bare https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git linux-stable-git-bare;'
   args:
-    creates: /mnt/gentoo/usr/src/linux/arch
+    creates: /usr/src/stable-git-bare
+  tags:
+    - kernel
+  
+- name: Clone the actual kernel ({{ kernel_version }})
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; mkdir linux-stable-git-{{ kernel_version }}; git clone --single-branch --branch {{ kernel_version }} linux-stable-git-bare/ linux-stable-git-{{ kernel_version }};'
+  args:
+    creates: /usr/src/linux-stable-git-{{ kernel_version }}
   tags:
     - kernel
 

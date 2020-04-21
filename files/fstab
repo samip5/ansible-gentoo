@@ -1,2 +1,2 @@
 /dev/mapper/vda2  none      swap    sw                 0 0
-/dev/mapper/vda3  /         xfs     noatime            0 1
+/dev/mapper/vda3  /         ext4     noatime            0 1
