@@ -9,16 +9,16 @@
   tags:
     - filesystem
 
-- name: Import signing keys
-  shell: "gpg --import /tmp/{{ item }}.asc && echo '{{ item }}:6' | gpg --import-ownertrust"
-  register: import_key_trusted
-  with_items:
-    - "{{ gpg_key_relengauto }}"
-  failed_when: >
-    not import_key_trusted.stderr |
-    search("key " + item|reverse|truncate(16)|reverse + ".*(imported|not changed)")
-  tags:
-    - filesystem
+#- name: Import signing keys
+#  shell: "gpg --import /tmp/{{ item }}.asc && echo '{{ item }}:6' | gpg --import-ownertrust"
+#  register: import_key_trusted
+#  with_items:
+#    - "{{ gpg_key_relengauto }}"
+#  failed_when: >
+#    not import_key_trusted.stderr |
+#    search("key " + item|reverse|truncate(16)|reverse + ".*(imported|not changed)")
+#  tags:
+#    - filesystem
 
 - name: Copy stage retrieval script
   template:
@@ -47,16 +47,16 @@
     chdir: /mnt/gentoo
     creates: /mnt/gentoo/{{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}
 
-- name: Verify stage3 archive signature
-  command: gpg --verify {{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}.DIGESTS.asc
-  args:
-      chdir: /mnt/gentoo
-  tags:
-    - filesystem
-  register: verify_archive_sig
-  failed_when: >
-    "Good signature from \"" + gpg_key_relengauto_desc
-    not in verify_archive_sig.stderr
+#- name: Verify stage3 archive signature
+#  command: gpg --verify {{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}.DIGESTS.asc
+#  args:
+#      chdir: /mnt/gentoo
+#  tags:
+#    - filesystem
+#  register: verify_archive_sig
+#  failed_when: >
+#    "Good signature from \"" + gpg_key_relengauto_desc
+#    not in verify_archive_sig.stderr
 
 - name: Verify stage3 archive hash
   command: sha512sum -c stage3.sha512

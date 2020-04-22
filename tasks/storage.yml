@@ -23,7 +23,7 @@
     label: gpt
     device: "{{ main_disk }}"
     number: 2
-    part_start: 1MiB
+    part_start: 2MiB
     part_end: "{{ swap_size }}"
     state: present
   tags:

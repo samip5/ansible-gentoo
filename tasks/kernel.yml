@@ -2,35 +2,35 @@
 - name: Create git bare repo for kernel & git clone
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; mkdir /usr/src/linux-stable-git-bare; git clone --mirror --bare https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git linux-stable-git-bare;'
   args:
-    creates: /usr/src/stable-git-bare
+    creates: /mnt/gentoo/usr/src/stable-git-bare
   tags:
     - kernel
   
 - name: Clone the actual kernel ({{ kernel_version }})
-  command: chroot /mnt/gentoo bash -c 'source /etc/profile; mkdir linux-stable-git-{{ kernel_version }}; git clone --single-branch --branch {{ kernel_version }} linux-stable-git-bare/ linux-stable-git-{{ kernel_version }};'
+  command: chroot /mnt/gentoo bash -c 'source /etc/profile; mkdir linux-stable-git-{{ kernel_version }}; git clone --single-branch --branch v{{ kernel_version }} linux-stable-git-bare/ linux-stable-git-{{ kernel_version }};'
   args:
-    creates: /usr/src/linux-stable-git-{{ kernel_version }}
+    creates: /mnt/gentoo//usr/src/linux-stable-git-{{ kernel_version }}
   tags:
     - kernel
 
 - name: Copy kernel config
   copy:
     src: kernels/{{ kernel }}
-    dest: /mnt/gentoo/usr/src/linux/.config
+    dest: /mnt/gentoo/usr/src/linux-stable-git-{{ kernel_version }}/.config
   tags:
     - kernel
 
 - name: Configure kernel
-  command: chroot /mnt/gentoo/ bash -c 'source /etc/profile;cd /usr/src/linux;make oldconfig'
+  command: chroot /mnt/gentoo/ bash -c 'source /etc/profile;cd /usr/src/linux-stable-git-{{ kernel_version }};make oldconfig'
   tags:
     - kernel
 
 - name: Compile kernel
-  command: chroot /mnt/gentoo/ bash -c 'source /etc/profile; cd /usr/src/linux; make {{ make_opts }}'
+  command: chroot /mnt/gentoo/ bash -c 'source /etc/profile; cd /usr/src/linux-stable-git-{{ kernel_version }}; make {{ make_opts }}'
   tags:
     - kernel
 
 - name: Install kernel & modules
-  command: chroot /mnt/gentoo/ bash -c 'source /etc/profile; cd /usr/src/linux; make modules_install; make install'
+  command: chroot /mnt/gentoo/ bash -c 'source /etc/profile; cd /usr/src/linux-stable-git-{{ kernel_version }}; make modules_install; make install'
   tags:
     - kernel
