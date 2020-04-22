@@ -1,63 +1,34 @@
 ---
-- name: Copy signing keys
-  copy:
-    src: "{{ item }}"
-    dest: /tmp
-    force: true
-  with_fileglob:
-    - keys/*.asc
+- name: Determine latest stage tarball
+  uri:
+    url: "{{ gentoo_install_baseurl }}{{ gentoo_install_latest_stage_pointer }}"
+    return_content: yes
+  register: latest_stage
   tags:
     - filesystem
 
-#- name: Import signing keys
-#  shell: "gpg --import /tmp/{{ item }}.asc && echo '{{ item }}:6' | gpg --import-ownertrust"
-#  register: import_key_trusted
-#  with_items:
-#    - "{{ gpg_key_relengauto }}"
-#  failed_when: >
-#    not import_key_trusted.stderr |
-#    search("key " + item|reverse|truncate(16)|reverse + ".*(imported|not changed)")
-#  tags:
-#    - filesystem
-
-- name: Copy stage retrieval script
-  template:
-    src: get_stage.sh
-    dest: /mnt/gentoo/
-    mode: 755
-    force: yes
+- set_fact:
+    latest_stage_tarball_url_suffix: "{{ ( latest_stage.content.splitlines() | reject('match', '#') | first ).split(' ')[0] }}"
+    latest_stage_tarball: "{{ ( latest_stage.content.splitlines() | reject('match', '#') | first ).split(' ')[0].split('/')[1] }}"
   tags:
     - filesystem
-
-- name: Find latest available release
-  command: /mnt/gentoo/get_stage.sh
-  args:
-    chdir: /mnt/gentoo
-  environment:
-    SHOW_RELEASE_NAME: yes
-  register: stage3_release_name
+    
+- name: Fetch latest stage tarball
+  get_url:
+    url: "{{ gentoo_install_baseurl }}{{ latest_stage_tarball_url_suffix }}"
+    dest: /mnt/gentoo/{{ latest_stage_tarball }}
+    tmp_dest: /mnt/gentoo
   tags:
     - filesystem
-
-- name: Download stage3 archive & signature
-  command: /mnt/gentoo/get_stage.sh
+    
+- name: Fetch latest stage tarball's digest
+  get_url:
+    url: "{{ gentoo_install_baseurl }}{{ latest_stage_tarball_url_suffix }}.DIGESTS.asc"
+    dest: /mnt/gentoo/{{ latest_stage_tarball }}.DIGESTS.asc
+    tmp_dest: /mnt/gentoo
   tags:
     - filesystem
-  args:
-    chdir: /mnt/gentoo
-    creates: /mnt/gentoo/{{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}
-
-#- name: Verify stage3 archive signature
-#  command: gpg --verify {{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}.DIGESTS.asc
-#  args:
-#      chdir: /mnt/gentoo
-#  tags:
-#    - filesystem
-#  register: verify_archive_sig
-#  failed_when: >
-#    "Good signature from \"" + gpg_key_relengauto_desc
-#    not in verify_archive_sig.stderr
-
+    
 - name: Verify stage3 archive hash
   command: sha512sum -c stage3.sha512
   args:
@@ -67,10 +38,10 @@
     ": OK" not in verify_archive_hash.stdout
   tags:
     - filesystem
-
+    
 - name: Unarchive stage3
   unarchive:
-    src: /mnt/gentoo/{{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}
+    src: /mnt/gentoo/{{ latest_stage_tarball }}
     dest: /mnt/gentoo
     remote_src: yes
     extra_opts:
@@ -85,10 +56,8 @@
     path: "{{ item }}"
     state: absent
   with_items:
-    - /mnt/gentoo/get_stage.sh
-    - /mnt/gentoo/latest-stage3-amd64.txt
-    - /mnt/gentoo/{{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}
-    - /mnt/gentoo/{{ stage3_prefix }}{{ stage3_release_name.stdout }}{{ stage3_file_suffix }}.DIGESTS.asc
+    - /mnt/gentoo/{{ latest_stage_tarball }}
+    - /mnt/gentoo/{{ latest_stage_tarball }}.DIGESTS.asc
     - /mnt/gentoo/stage3.sha512
   tags:
     - filesystem

@@ -1,5 +1,5 @@
 ---
-- name: Install system packages
+- name: Install system packages (syslog, cronie, grub)
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge {{ item.name }}' creates="{{ item.creates }}"
   with_items:
     - name: syslog-ng
@@ -9,22 +9,22 @@
     - name: grub:2
       creates: /mnt/gentoo/usr/sbin/grub-install
 
-- name: Start system packages at boot
+- name: Start system packages at boot (syslog, cronie)
   command: chroot /mnt/gentoo bash -c 'rc-update add {{ item }} default'
   with_items:
     - syslog-ng
     - cronie
 
-- name: Configure grub Defaults
+- name: Configure grub defaults
   copy: src=grub_default dest=/mnt/gentoo/etc/default/grub mode=0644 owner=root group=root
 
-- name: Install Grub to Boot Drive
+- name: Install grub to boot device ({{ main_disk }})
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; grub-install {{ main_disk }}'
 
-- name: Configure Grub Make Config
+- name: Configure grub
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; grub-mkconfig -o /boot/grub/grub.cfg'
 
-- name: Set Root Password
+- name: Set root password
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; echo "root:{{ root_passwd }}" | /usr/sbin/chpasswd'
 
 - name: Copy portage config
@@ -35,30 +35,14 @@
 - name: Rebuild @world
   command: chroot /mnt/gentoo bash -c 'source /etc/profile; emerge --update --deep --newuse @world'
 
-- name: Copy locale config
-  copy:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    force: yes
-  with_items:
-    - src: locale.gen
-      dest: /etc/locale.gen
-    - src: 02locale
-      dest: /etc/env.d/02locale
+- name: configure locales
+  lineinfile:
+    dest: /etc/locale.gen
+    line: "{{ item }}"
+  with_items: "{{ gentoo_install_locales }}"
 
 - name: Build locales
   shell: chroot /mnt/gentoo bash -c 'source /etc/profile; /usr/sbin/locale-gen; /usr/sbin/env-update'
-
-- name: Add user
-  user:
-    name: "{{ user_name }}"
-    group: users
-    password: "{{ user_passwd_crypt }}"
-    update_password: on_create
-
-- name: Copy ssh key to user
-  authorized_key:
-    user: "{{ user_name }}"
-    state: present
-    key: "{{ lookup('file', pubkey) }}"
-    manage_dir: True
+  
+- name: set default locale
+  command: eselect locale set {{ gentoo_install_locale_default }}

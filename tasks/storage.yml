@@ -4,6 +4,22 @@
   register: parted_is_done
   tags:
     - storage
+    
+- name: check for mounted disk
+  shell: "grep '{{ main_disk }}' /proc/mounts"
+  failed_when: false
+  changed_when: false
+  register: check_mounted_disk
+  check_mode: no
+  tags:
+    - storage
+
+- name: abort if disk mounted
+  fail:
+    msg: "Aborting install due to {{ main_disk }} being mounted"
+  when: check_mounted_disk.rc == 0
+  tags:
+    - storage
 
 - name: Create Grub BIOS Partition
   when: parted_is_done.stat.exists == False

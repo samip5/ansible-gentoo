@@ -1,21 +1,26 @@
 ---
-domain: localdomain
+main_disk: /dev/sda
+gentoo_install_baseurl: "http://distfiles.gentoo.org/releases/amd64/autobuilds/"
+gentoo_install_latest_stage_pointer: "latest-stage3-amd64.txt"
+gentoo_install_portage_makeconf_default:
+  MAKEOPTS: "-j{{ ansible_processor_vcpus | default(2) }}"
+  USE: "-X"
+  CFLAGS: "-march=native -O2 -pipe"
+gentoo_install_timezone: Europe/Helsinki
+gentoo_install_locales:
+  - en_US ISO-8859-1
+  - en_US.UTF-8 UTF-8
+gentoo_install_locale_default: en_US.utf8
+getnoo_install_hostname: localhost
 force_format: no
 fstype: ext4
 gateway: "{{ ansible_default_ipv4.gateway }}"
-gpg_key_relengauto: 13EBBDBEDE7A12775DFDB1BABB572E0E2D182910
-gpg_key_relengauto_desc: "Gentoo Linux Release Engineering (Automated Weekly Release Key) <releng@gentoo.org>"
 #kernel: config-4.9.76-gentoo-r1
 kernel: config-5.4.34-manjaro-conf
-main_disk: /dev/sda
-make_opts: -j4
 management_interface: "{{ ansible_default_ipv4.interface }}"
-mirror: http://gentoo.aditsu.net:8000
 netmask: "{{ ansible_default_ipv4.netmask }}"
 pubkey: ~/.ssh/id_rsa.pub
 root_passwd: gentoo-root
-stage3_file_suffix: .tar.xz
-stage3_prefix: stage3-amd64-
 swap_size: 4096MiB
 timezone: Europe/Helsinki
 kernel_version: 5.4.34
